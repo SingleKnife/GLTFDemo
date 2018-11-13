@@ -8,23 +8,21 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <gl_utils.h>
 #include <GLES2/gl2.h>
+#include "gl_utils.h"
+
 #include "tiny_gltf.h"
 
-using namespace tinygltf;
-using namespace std;
-
 class ModelRender {
-    string fileName;
-    Model model;
+    std::string fileName;
+    tinygltf::Model model;
     bool loadSuccess;
-    vector<GLuint> glBuffers;
+    std::vector<GLuint> glBuffers;
 private:
     GLuint glProgram;
-    array<float, 16> projectionMartix;
-    array<float, 16> modelMatrix;
-    map<string, GLint> glShaderVariable;
+    std::array<float, 16> projectionMartix;
+    std::array<float, 16> modelMatrix;
+    std::map<std::string, GLint> glShaderVariable;
 
 public:
     ModelRender() {
@@ -32,15 +30,16 @@ public:
     }
 
 private:
-    void drawMesh(const Mesh &mesh);
+    void drawModel();
+    void drawMesh(const tinygltf::Mesh &mesh);
     bool isLoadSuccess();
-    void loadBinary(string fileName);
+    void loadBinary(std::string fileName);
     void setupBuffers();
 
 public:
-    void init();
+    void init(const std::string fileName);
     void drawFrame();
-    void onProjectionChanged(array<float, 16> projectionMatrix);
+    void onProjectionChanged(std::array<float, 16> projectionMatrix);
 };
 
 

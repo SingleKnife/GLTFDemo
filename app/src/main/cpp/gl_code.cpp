@@ -27,17 +27,18 @@ void renderFrame() {
     if(!isInit) {
         return;
     }
+    modelRender->drawFrame();
 }
 
-void init(string fileName) {
+void init(std::string fileName) {
     if(modelRender == nullptr) {
         modelRender = new ModelRender();
         isInit = true;
     }
-    modelRender->init();
+    modelRender->init(fileName);
 }
 
-void onProjectionChanged(array<float, 16> projectionMatrix) {
+void onProjectionChanged(std::array<float, 16> projectionMatrix) {
     if(!isInit) {
         return;
     }
@@ -55,7 +56,7 @@ JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onProjectionChang
         return;
     }
 
-    array<float, 16> projectionMatrix;
+    std::array<float, 16> projectionMatrix;
     jfloat *jArrayData = env->GetFloatArrayElements(jProjectionMatrix, 0);
     int arrayLength = env->GetArrayLength(jProjectionMatrix);
 

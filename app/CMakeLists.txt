@@ -4,7 +4,6 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.4.1)
-aux_source_directory(src/main/cpp SRC_DIR)
 
 add_library( # Sets the name of the library.
         model
@@ -13,7 +12,9 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        ${SRC_DIR}
+        src/main/cpp/gl_code.cpp
+        src/main/cpp/gl_utils.cpp
+        src/main/cpp/ModelRender.cpp
         )
 
 

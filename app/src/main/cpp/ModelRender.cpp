@@ -2,37 +2,43 @@
 // Created by dong on 2018/11/6.
 //
 
-#include "ModelRender.h"
 #include "gl_utils.h"
 #include "log.h"
 
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "ModelRender.h"
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-const string TAG = "fyd";
+using namespace tinygltf;
 
-void ModelRender::loadBinary(string fileName) {
+const std::string TAG = "fyd";
+
+void ModelRender::loadBinary(std::string fileName) {
     TinyGLTF gltf_ctx;
-    string err;
-    string warn;
+    std::string err;
+    std::string warn;
     loadSuccess = gltf_ctx.LoadBinaryFromFile(&model, &err, &warn, fileName);
     if(!loadSuccess) {
         if(!err.empty()) {
-            LogE(TAG, "loadBinary: " + err);
+            LOGE("loadBinary: %s" ,err.c_str());
         }
         if(!warn.empty()) {
-            LogE(TAG, "loadBinary: " + warn);
+            LOGE("loadBinary: %s", warn.c_str());
         }
     }
 }
 
 void ModelRender::setupBuffers() {
-    if(!loadSuccess || model.bufferViews.size() < 0) {
+    if(!loadSuccess || model.bufferViews.size() == 0) {
         return;
     }
     for(size_t i = 0; i < model.bufferViews.size(); ++i) {
         const BufferView &bufferView = model.bufferViews[i];
         if(bufferView.target == 0) {
-            LogE(TAG, "bufferView target is zero: " + i);
+            LOGE("bufferView target is zero: %d", i);
             continue;
         }
         const Buffer &buffer = model.buffers[bufferView.buffer];
@@ -50,8 +56,8 @@ bool ModelRender::isLoadSuccess() {
 
 void ModelRender::drawMesh(const Mesh &mesh) {
     for(int i = 0; i < mesh.primitives.size(); ++i) {
-        Primitive &primitive = mesh.primitives[i];
-        int positionAccessorIndex = primitive.attributes["POSITION"];
+        const Primitive &primitive = mesh.primitives[i];
+        int positionAccessorIndex = primitive.attributes.at("POSITION");
         Accessor &positionAccessor = model.accessors[positionAccessorIndex];
         glBindBuffer(GL_ARRAY_BUFFER, glBuffers[positionAccessor.bufferView]);
 
@@ -100,7 +106,7 @@ void ModelRender::drawMesh(const Mesh &mesh) {
     }
 }
 
-void ModelRender::init() {
+void ModelRender::init(const std::string fileName) {
     auto gVertexShader =
             "attribute vec4 aPosition;\n"
             "void main() {\n"
@@ -112,15 +118,29 @@ void ModelRender::init() {
             "void main() {\n"
             "  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
             "}\n";
+    loadBinary(fileName);
+    if(!isLoadSuccess()) {
+        return;
+    }
+    setupBuffers();
     glProgram = createProgram(gVertexShader, gFragmentShader);
     GLint aPositionLocation = glGetAttribLocation(glProgram, "aPosition");
     glShaderVariable["POSITION"] = aPositionLocation;
 }
 
-void ModelRender::drawFrame() {
+void ModelRender::drawModel() {
+    if(!isLoadSuccess()) {
+        return;
+    }
+    Mesh &mesh = model.meshes[0];
+    drawMesh(mesh);
 }
 
-void onProjectionChanged(array<float, 16> projectionMatrix) {
+void ModelRender::drawFrame() {
+    drawModel();
+}
+
+void ModelRender::onProjectionChanged(std::array<float, 16> projectionMatrix) {
 
 }
 
