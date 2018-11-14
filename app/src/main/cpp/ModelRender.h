@@ -23,6 +23,7 @@ private:
     std::array<float, 16> projectionMartix;
     std::array<float, 16> modelMatrix;
     std::map<std::string, GLint> glShaderVariable;
+    GLint projectionMatrixLocation;
 
 public:
     ModelRender() {

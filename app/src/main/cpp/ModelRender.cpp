@@ -78,6 +78,7 @@ void ModelRender::drawMesh(const Mesh &mesh) {
         glVertexAttribPointer(glShaderVariable["POSITION"], size, positionAccessor.componentType,
                               positionAccessor.normalized ? GL_TRUE : GL_FALSE, byteStride,
                               BUFFER_OFFSET(positionAccessor.byteOffset));
+        glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, projectionMartix.data());
         glEnableVertexAttribArray((GLuint)glShaderVariable["POSITION"]);
 
         const Accessor &indexAccessor = model.accessors[primitive.indices];
@@ -109,8 +110,9 @@ void ModelRender::drawMesh(const Mesh &mesh) {
 void ModelRender::init(const std::string fileName) {
     auto gVertexShader =
             "attribute vec4 aPosition;\n"
+            "uniform mat4 uProjectionMatrix;\n"
             "void main() {\n"
-            "  gl_Position = aPosition;\n"
+            "  gl_Position = uProjectionMatrix * aPosition;\n"
             "}\n";
 
     auto gFragmentShader =
@@ -125,7 +127,10 @@ void ModelRender::init(const std::string fileName) {
     setupBuffers();
     glProgram = createProgram(gVertexShader, gFragmentShader);
     GLint aPositionLocation = glGetAttribLocation(glProgram, "aPosition");
+    projectionMatrixLocation = glGetUniformLocation(glProgram, "uProjectionMatrix");
     glShaderVariable["POSITION"] = aPositionLocation;
+    glUseProgram(glProgram);
+    checkGlError("init");
 }
 
 void ModelRender::drawModel() {
@@ -141,6 +146,8 @@ void ModelRender::drawFrame() {
 }
 
 void ModelRender::onProjectionChanged(std::array<float, 16> projectionMatrix) {
-
+    for(int i = 0; i < 16; ++i) {
+        this->projectionMartix[i] = projectionMatrix[i];
+    }
 }
 
