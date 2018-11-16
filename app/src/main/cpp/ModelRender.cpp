@@ -45,8 +45,9 @@ void ModelRender::setupBuffers() {
         GLuint bufferId;
         glGenBuffers(1, &bufferId);
         glBindBuffer(bufferView.target, bufferId);
-        glBufferData(bufferView.target, bufferView.byteLength, &buffer.data[0], GL_STATIC_DRAW);
+        glBufferData(bufferView.target, bufferView.byteLength, &buffer.data[0] + bufferView.byteOffset, GL_STATIC_DRAW);
         glBuffers.push_back(bufferId);
+        glBindBuffer(bufferView.target, 0);
     }
 }
 
@@ -104,21 +105,25 @@ void ModelRender::drawMesh(const Mesh &mesh) {
         glDrawElements(mode, indexAccessor.count, indexAccessor.componentType,
                        BUFFER_OFFSET(indexAccessor.byteOffset));
         glDisableVertexAttribArray(glShaderVariable["POSITION"]);
+        checkGlError("draw");
     }
 }
 
 void ModelRender::init(const std::string fileName) {
     auto gVertexShader =
-            "attribute vec4 aPosition;\n"
+            "attribute vec3 aPosition;\n"
             "uniform mat4 uProjectionMatrix;\n"
+            "varying vec3 pos;"
             "void main() {\n"
-            "  gl_Position = uProjectionMatrix * aPosition;\n"
+            "  pos = aPosition;"
+            "  gl_Position = uProjectionMatrix * vec4(aPosition, 1);\n"
             "}\n";
 
     auto gFragmentShader =
             "precision mediump float;\n"
+            "varying vec3 pos;"
             "void main() {\n"
-            "  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
+            "  gl_FragColor = vec4(pos.x, pos.y, pos.z, 1.0);\n"
             "}\n";
     loadBinary(fileName);
     if(!isLoadSuccess()) {

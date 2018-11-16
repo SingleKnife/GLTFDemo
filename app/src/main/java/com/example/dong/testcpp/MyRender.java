@@ -12,6 +12,8 @@ import javax.microedition.khronos.opengles.GL10;
 public class MyRender implements GLSurfaceView.Renderer {
     private Context context;
     private float[] projectionMatrix = new float[16];
+    private float[] viewMatrix = new float[16];
+    private float[] viewProjectionMatrix = new float[16];
 
     MyRender(Context context) {
         this.context = context;
@@ -25,8 +27,10 @@ public class MyRender implements GLSurfaceView.Renderer {
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
         Matrix.setIdentityM(projectionMatrix, 0);
-//        Matrix.perspectiveM(projectionMatrix, 0, 45, (float)width / (float)height, -3, 10);
-        GL2JNILib.onProjectionChanged(projectionMatrix);
+        Matrix.perspectiveM(projectionMatrix, 0, 45, (float)width / (float)height, 1, 5f);
+        Matrix.setLookAtM(viewMatrix, 0, 0, 2, 3, 0, 0, 0, 0, 1, 0);
+        Matrix.multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
+        GL2JNILib.onProjectionChanged(viewProjectionMatrix);
     }
 
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
