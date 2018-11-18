@@ -38,20 +38,36 @@ void init(std::string fileName) {
     modelRender->init(fileName);
 }
 
-void onProjectionChanged(std::array<float, 16> projectionMatrix) {
+void onProjectionMatrixChanged(std::array<float, 16> projectionMatrix) {
     if(!isInit) {
         return;
     }
-    modelRender->onProjectionChanged(projectionMatrix);
+    modelRender->onProjectionMatrixChanged(projectionMatrix);
+}
+
+void onViewMatrixChanged(std::array<float, 16> viewMatrix) {
+    if(!isInit) {
+        return;
+    }
+    modelRender->onViewMatrixChanged(viewMatrix);
+}
+
+void onModelMatrixChanged(std::array<float, 16> modelMatrix) {
+    if(!isInit) {
+        return;
+    }
+    modelRender->onModelMatrixChanged(modelMatrix);
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onProjectionChanged(JNIEnv * env, jclass type, jfloatArray projectionMatrix);
+    JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onProjectionMatrixChanged(JNIEnv * env, jclass type, jfloatArray projectionMatrix);
+    JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onViewMatrixChanged(JNIEnv * env, jclass type, jfloatArray viewMatrix);
+    JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onModelMatrixChanged(JNIEnv * env, jclass type, jfloatArray jModelMatrix);
     JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onDrawFrame(JNIEnv * env, jclass type);
     JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_init(JNIEnv *env, jclass type, jstring fileName);
 };
 
-JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onProjectionChanged(JNIEnv * env, jclass type, jfloatArray jProjectionMatrix) {
+JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onProjectionMatrixChanged(JNIEnv * env, jclass type, jfloatArray jProjectionMatrix) {
     if(!isInit) {
         return;
     }
@@ -64,9 +80,47 @@ JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onProjectionChang
         projectionMatrix[i] = jArrayData[i];
     }
 
-    onProjectionChanged(projectionMatrix);
+    onProjectionMatrixChanged(projectionMatrix);
 
     env->ReleaseFloatArrayElements(jProjectionMatrix, jArrayData, 0);
+}
+
+JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onViewMatrixChanged(JNIEnv * env, jclass type, jfloatArray jViewMatrix) {
+    if(!isInit) {
+        return;
+    }
+
+    std::array<float, 16> viewMatrix;
+    jfloat *jArrayData = env->GetFloatArrayElements(jViewMatrix, 0);
+    int arrayLength = env->GetArrayLength(jViewMatrix);
+
+    for(int i = 0; i < arrayLength; ++i) {
+        viewMatrix[i] = jArrayData[i];
+    }
+
+    onViewMatrixChanged(viewMatrix);
+
+    env->ReleaseFloatArrayElements(jViewMatrix, jArrayData, 0);
+
+}
+
+JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onModelMatrixChanged(JNIEnv * env, jclass type, jfloatArray jModelMatrix) {
+    if(!isInit) {
+        return;
+    }
+
+    std::array<float, 16> modelMatrix;
+    jfloat *jArrayData = env->GetFloatArrayElements(jModelMatrix, 0);
+    int arrayLength = env->GetArrayLength(jModelMatrix);
+
+    for(int i = 0; i < arrayLength; ++i) {
+        modelMatrix[i] = jArrayData[i];
+    }
+
+    onModelMatrixChanged(modelMatrix);
+
+    env->ReleaseFloatArrayElements(jModelMatrix, jArrayData, 0);
+
 }
 
 JNIEXPORT void JNICALL Java_com_example_dong_testcpp_GL2JNILib_onDrawFrame(JNIEnv * env, jclass type) {

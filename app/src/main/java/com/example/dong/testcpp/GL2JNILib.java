@@ -26,6 +26,8 @@ public class GL2JNILib {
 
 
     public static native void init(String fileName);
-    public static native void onProjectionChanged(float[] projectionMatrix);
+    public static native void onProjectionMatrixChanged(float[] projectionMatrix);
+    public static native void onViewMatrixChanged(float[] viewMatrix);
+    public static native void onModelMatrixChanged(float[] modelMatrix);
     public static native void onDrawFrame();
 }

@@ -22,8 +22,16 @@ private:
     GLuint glProgram;
     std::array<float, 16> projectionMartix;
     std::array<float, 16> modelMatrix;
-    std::map<std::string, GLint> glShaderVariable;
+    std::array<float, 16> viewMatrix;
+    std::array<float, 3> lightColor;
+    std::array<float, 3> lightPos;
+
+    std::map<std::string, GLint> glAttributeLocations;
     GLint projectionMatrixLocation;
+    GLint viewMatrixLocation;
+    GLint modelMatrixLocation;
+    GLint lightColorLocation;
+    GLint lightPosLocation;       //方向光，与原点的方向
 
 public:
     ModelRender() {
@@ -33,14 +41,18 @@ public:
 private:
     void drawModel();
     void drawMesh(const tinygltf::Mesh &mesh);
+    void beforeDrawMesh();
     bool isLoadSuccess();
     void loadBinary(std::string fileName);
     void setupBuffers();
+    void initAttributeLocations();
 
 public:
     void init(const std::string fileName);
     void drawFrame();
-    void onProjectionChanged(std::array<float, 16> projectionMatrix);
+    void onProjectionMatrixChanged(std::array<float, 16> projectionMatrix);
+    void onViewMatrixChanged(std::array<float, 16> viewMatrix);
+    void onModelMatrixChanged(std::array<float, 16> modelMatrix);
 };
 
 
