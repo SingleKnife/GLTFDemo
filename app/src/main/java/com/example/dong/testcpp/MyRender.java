@@ -42,7 +42,7 @@ public class MyRender implements GLSurfaceView.Renderer {
         GLES20.glClearColor(1, 1, 1, 0);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         Matrix.setIdentityM(modelMatrix, 0);
-        Matrix.rotateM(modelMatrix, 0, 60f, 1.0f, 0, 0);
+//        Matrix.rotateM(modelMatrix, 0, 10f, 1.0f, 0, 1);
         GL2JNILib.onModelMatrixChanged(modelMatrix);
     }
 }

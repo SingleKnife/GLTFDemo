@@ -105,41 +105,51 @@ void ModelRender::init(const std::string fileName) {
             "uniform mat4 uProjectionMatrix;\n"
             "uniform mat4 uViewMatrix;"
             "uniform mat4 uModelMatrix;"
-            "varying vec3 posNormal;\n"
-            "varying vec3 fragPos;"
+            "varying vec3 viewPosNormal;\n"
+            "varying vec3 viewFragPos;"
             "void main() {\n"
-            "  posNormal = normalize(vec3(uViewMatrix * uModelMatrix * vec4(aNormal, 0.0)));\n"
+            "  viewPosNormal = normalize(vec3(uViewMatrix * uModelMatrix * vec4(aNormal, 0.0)));\n"
             "  gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1);\n"
-            "  fragPos = (uModelMatrix * vec4(aPosition, 1.0)).xyz;"
+            "  viewFragPos = (uViewMatrix * uModelMatrix * vec4(aPosition, 1.0)).xyz;"
             "}\n";
 
-    auto gFragmentShader =
-            "precision mediump float;\n"
-            "uniform vec3 uLightColor;\n"
-            "uniform vec3 uLightPos;\n"
-            "uniform mat4 uViewMatrix;"
-            "uniform mat4 uModelMatrix;"
-            "varying vec3 posNormal;\n"
-            "varying vec3 fragPos;"
-            "void main() {\n"
-            "  vec3 objColor = vec3(1.0, 1.0, 0);"
-            "  vec3 lightDir = normalize(vec3(uViewMatrix * vec4(uLightPos - fragPos, 0.0)));"
-            "  float ambientStrength = 0.3;"
-            "  vec3 ambient = ambientStrength * uLightColor;"
-            "  float diff = max(dot(posNormal, lightDir), 0.0);"
-            "  vec3 diffuse = diff * uLightColor;"
-            "  vec3 lightResult = ambient + diffuse;"
-            "  gl_FragColor = vec4(lightResult * objColor, 1.0);\n"
-            "}\n";
+    auto gFragmentShader = "precision mediump float;\n"
+                           "    uniform vec3 uLightColor;\n"
+                           "    uniform vec3 uLightPos;\n"
+                           "    uniform mat4 uViewMatrix;\n"
+                           "    uniform mat4 uModelMatrix;\n"
+                           "    varying vec3 viewPosNormal;\n"
+                           "    varying vec3 viewFragPos;\n"
+                           "\n"
+                           "\n"
+                           "    void main() {\n"
+                           "        vec3 viewLightPos = (uViewMatrix * vec4(uLightPos, 1.0)).xyz;"
+                           "        vec3 objColor = vec3(1.0, 1.0, 0);\n"
+                           "        vec3 viewLightDir = normalize(vec3(vec4(viewLightPos - viewFragPos, 0.0)));\n"
+                           "        float ambientStrength = 0.3;\n"
+                           "        vec3 ambient = ambientStrength * uLightColor;\n"
+                           "        float diff = max(dot(viewPosNormal, viewLightDir), 0.0);\n"
+                           "        vec3 diffuse = diff * uLightColor;\n"
+                           "        //计算镜面反射\n"
+                           "        float specularStrength = 0.5;\n"
+                           "        vec3 reflectDir = reflect(-viewLightDir, viewPosNormal);\n"
+                           "        vec3 viewEyeDir = normalize(-viewFragPos);//眼位置在0\n"
+                           "        float spec = pow(max(dot(viewEyeDir, reflectDir), 0.0), 32.0);\n"
+                           "        vec3 specular = specularStrength * spec * uLightColor;\n"
+                           "\n"
+                           "        vec3 lightResult = ambient + specular;\n"
+                           "        gl_FragColor = vec4(lightResult * objColor, 1.0);\n"
+                           "    }";
+
     loadBinary(fileName);
     if(!isLoadSuccess()) {
         return;
     }
     lightColor.fill(1.0f);
     lightPos.fill(0);
-    lightPos[1] = 3.0f;
-    lightPos[0] = 3.0f;
-    lightPos[2] = 1.0f;
+    lightPos[1] = 0.0f;
+    lightPos[0] = 0.0f;
+    lightPos[2] = 3.0f;
 
     setupBuffers();
     glProgram = createProgram(gVertexShader, gFragmentShader);
