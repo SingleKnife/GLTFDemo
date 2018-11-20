@@ -108,9 +108,9 @@ void ModelRender::init(const std::string fileName) {
             "varying vec3 posNormal;\n"
             "varying vec3 fragPos;"
             "void main() {\n"
-            "  posNormal = aNormal;\n"
+            "  posNormal = normalize(vec3(uViewMatrix * uModelMatrix * vec4(aNormal, 0.0)));\n"
             "  gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1);\n"
-            "  fragPos = aPosition;"
+            "  fragPos = (uModelMatrix * vec4(aPosition, 1.0)).xyz;"
             "}\n";
 
     auto gFragmentShader =
@@ -118,11 +118,12 @@ void ModelRender::init(const std::string fileName) {
             "uniform vec3 uLightColor;\n"
             "uniform vec3 uLightPos;\n"
             "uniform mat4 uViewMatrix;"
+            "uniform mat4 uModelMatrix;"
             "varying vec3 posNormal;\n"
             "varying vec3 fragPos;"
             "void main() {\n"
             "  vec3 objColor = vec3(1.0, 1.0, 0);"
-            "  vec3 lightDir = normalize(uLightPos - fragPos);"
+            "  vec3 lightDir = normalize(vec3(uViewMatrix * vec4(uLightPos - fragPos, 0.0)));"
             "  float ambientStrength = 0.3;"
             "  vec3 ambient = ambientStrength * uLightColor;"
             "  float diff = max(dot(posNormal, lightDir), 0.0);"
@@ -137,7 +138,8 @@ void ModelRender::init(const std::string fileName) {
     lightColor.fill(1.0f);
     lightPos.fill(0);
     lightPos[1] = 3.0f;
-    lightPos[0] = 0.0f;
+    lightPos[0] = 3.0f;
+    lightPos[2] = 1.0f;
 
     setupBuffers();
     glProgram = createProgram(gVertexShader, gFragmentShader);

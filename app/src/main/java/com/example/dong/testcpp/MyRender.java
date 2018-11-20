@@ -15,6 +15,7 @@ public class MyRender implements GLSurfaceView.Renderer {
     private float[] viewMatrix = new float[16];
     private float[] modelMatrix = new float[16];
     private float[] viewProjectionMatrix = new float[16];
+    private float[] viewPosition = new float[3];
 
     MyRender(Context context) {
         this.context = context;
@@ -41,7 +42,7 @@ public class MyRender implements GLSurfaceView.Renderer {
         GLES20.glClearColor(1, 1, 1, 0);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         Matrix.setIdentityM(modelMatrix, 0);
-        Matrix.rotateM(modelMatrix, 0, 20, 1.0f, 0.3f, 0.5f);
+        Matrix.rotateM(modelMatrix, 0, 60f, 1.0f, 0, 0);
         GL2JNILib.onModelMatrixChanged(modelMatrix);
     }
 }
