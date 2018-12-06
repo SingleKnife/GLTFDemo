@@ -27,11 +27,26 @@ private:
     std::array<float, 3> lightPos;
 
     std::map<std::string, GLint> glAttributeLocations;
-    GLint projectionMatrixLocation;
-    GLint viewMatrixLocation;
-    GLint modelMatrixLocation;
-    GLint lightColorLocation;
-    GLint lightPosLocation;       //方向光，与原点的方向
+    GLint uProjectionMatrixLocation;
+    GLint uViewMatrixLocation;
+    GLint uModelMatrixLocation;
+    GLint uUvpMatrixLocation;
+    GLint uNormalMatrixLocation;
+
+    GLint uCameraLocation;
+
+    GLint uLightColorLocation;
+    GLint uLightPosLocation;       //方向光，与原点的方向
+
+    GLint uScaleDiffbaseMrLocation;
+    GLint uScaleFGDSpecLocation;
+    GLint uScaleIBLAmbient;
+
+    bool hasLODExtension = false;
+    bool hasDerivativersExtension = false;
+    bool hasSRGBExt = false;
+
+    std::map<std::string, bool> defines;
 
 public:
     ModelRender() {
@@ -46,6 +61,8 @@ private:
     void loadBinary(std::string fileName);
     void setupBuffers();
     void initAttributeLocations();
+    std::string defineShaderStr(std::string shaderStr);
+    void initTextures(tinygltf::Primitive primitive);
 
 public:
     void init(const std::string fileName);

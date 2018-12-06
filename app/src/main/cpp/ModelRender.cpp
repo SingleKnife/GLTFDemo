@@ -9,6 +9,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "ModelRender.h"
+#include "shader.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -99,47 +100,8 @@ void ModelRender::drawMesh(const Mesh &mesh) {
 }
 
 void ModelRender::init(const std::string fileName) {
-    auto gVertexShader =
-            "attribute vec3 aPosition;\n"
-            "attribute vec3 aNormal;\n"
-            "uniform mat4 uProjectionMatrix;\n"
-            "uniform mat4 uViewMatrix;"
-            "uniform mat4 uModelMatrix;"
-            "varying vec3 viewPosNormal;\n"
-            "varying vec3 viewFragPos;"
-            "void main() {\n"
-            "  viewPosNormal = normalize(vec3(uViewMatrix * uModelMatrix * vec4(aNormal, 0.0)));\n"
-            "  gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1);\n"
-            "  viewFragPos = (uViewMatrix * uModelMatrix * vec4(aPosition, 1.0)).xyz;"
-            "}\n";
-
-    auto gFragmentShader = "precision mediump float;\n"
-                           "    uniform vec3 uLightColor;\n"
-                           "    uniform vec3 uLightPos;\n"
-                           "    uniform mat4 uViewMatrix;\n"
-                           "    uniform mat4 uModelMatrix;\n"
-                           "    varying vec3 viewPosNormal;\n"
-                           "    varying vec3 viewFragPos;\n"
-                           "\n"
-                           "\n"
-                           "    void main() {\n"
-                           "        vec3 viewLightPos = (uViewMatrix * vec4(uLightPos, 1.0)).xyz;"
-                           "        vec3 objColor = vec3(1.0, 1.0, 0);\n"
-                           "        vec3 viewLightDir = normalize(vec3(vec4(viewLightPos - viewFragPos, 0.0)));\n"
-                           "        float ambientStrength = 0.3;\n"
-                           "        vec3 ambient = ambientStrength * uLightColor;\n"
-                           "        float diff = max(dot(viewPosNormal, viewLightDir), 0.0);\n"
-                           "        vec3 diffuse = diff * uLightColor;\n"
-                           "        //计算镜面反射\n"
-                           "        float specularStrength = 0.5;\n"
-                           "        vec3 reflectDir = reflect(-viewLightDir, viewPosNormal);\n"
-                           "        vec3 viewEyeDir = normalize(-viewFragPos);//眼位置在0\n"
-                           "        float spec = pow(max(dot(viewEyeDir, reflectDir), 0.0), 32.0);\n"
-                           "        vec3 specular = specularStrength * spec * uLightColor;\n"
-                           "\n"
-                           "        vec3 lightResult = ambient + specular;\n"
-                           "        gl_FragColor = vec4(lightResult * objColor, 1.0);\n"
-                           "    }";
+    auto gVertexShader = vert_shader.c_str();
+    auto gFragmentShader = frag_shader.c_str();
 
     loadBinary(fileName);
     if(!isLoadSuccess()) {
@@ -152,15 +114,63 @@ void ModelRender::init(const std::string fileName) {
     lightPos[2] = 3.0f;
 
     setupBuffers();
+
     glProgram = createProgram(gVertexShader, gFragmentShader);
-    projectionMatrixLocation = glGetUniformLocation(glProgram, "uProjectionMatrix");
-    viewMatrixLocation = glGetUniformLocation(glProgram, "uViewMatrix");
-    modelMatrixLocation = glGetUniformLocation(glProgram, "uModelMatrix");
-    lightColorLocation = glGetUniformLocation(glProgram, "uLightColor");
-    lightPosLocation = glGetUniformLocation(glProgram, "uLightPos");
+    uProjectionMatrixLocation = glGetUniformLocation(glProgram, "uProjectionMatrix");
+    uViewMatrixLocation = glGetUniformLocation(glProgram, "uViewMatrix");
+    uModelMatrixLocation = glGetUniformLocation(glProgram, "uModelMatrix");
+    uLightColorLocation = glGetUniformLocation(glProgram, "uLightColor");
+    uLightPosLocation = glGetUniformLocation(glProgram, "uLightPos");
     initAttributeLocations();
     glUseProgram(glProgram);
     checkGlError("init");
+}
+
+std::string ModelRender::defineShaderStr(std::string shaderStr) {
+    defines["MANUAL_SRGB"] = true;
+    for(Mesh mesh : model.meshes) {
+        for(Primitive primitive : mesh.primitives) {
+            for(auto iter = primitive.attributes.cbegin();
+                    iter != primitive.attributes.cend(); ++iter) {
+                if(iter->first == "NORMAL") {
+                    defines["HAS_NORMALS"] = true;
+                }
+                if(iter->first == "TANGENT") {
+                    defines["HAS_TANGENT"] = true;
+                }
+                if(iter->first == "TEXCOORD_0") {
+                    defines["HAS_UV"] = true;
+                }
+
+                const Material &material = model.materials[primitive.material];
+
+
+            }
+        }
+    }
+}
+
+void ModelRender::initTextures(Primitive primitive) {
+    bool hasMaterial = primitive.material != -1;
+    const Material &material = hasMaterial ? model.materials[primitive.material] : nullptr;
+    const ParameterMap pbrMetallicRoughnessValues = material.values;
+    for(auto iter = pbrMetallicRoughnessValues.cbegin(); iter != pbrMetallicRoughnessValues.cbegin(); ++iter) {
+        ColorValue baseColorFactor = {1.0, 1.0, 1.0, 1.0};
+        double metallic = 1.0;
+        double roughness = 1.0;
+        if(iter->first == "baseColorFactor") {
+            baseColorFactor = iter->second.ColorFactor();
+        } else if(iter->first == "baseColorTexture") {
+
+        } else if(iter->first == "metallicFactor") {
+            metallic = iter->second.Factor();
+        } else if(iter->first == "roughnessFactor") {
+            roughness = iter->second.Factor();
+        }
+    }
+
+    //base color
+
 }
 
 void ModelRender::drawModel() {
@@ -197,11 +207,11 @@ void ModelRender::onModelMatrixChanged(std::array<float, 16> modelMatrix) {
  * 绘制前设置环境属性
  */
 void ModelRender::beforeDrawMesh() {
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, projectionMartix.data());
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, viewMatrix.data());
-    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, modelMatrix.data());
-    glUniform3fv(lightColorLocation, 1, lightColor.data());
-    glUniform3fv(lightPosLocation, 1, lightPos.data());
+    glUniformMatrix4fv(uProjectionMatrixLocation, 1, GL_FALSE, projectionMartix.data());
+    glUniformMatrix4fv(uViewMatrixLocation, 1, GL_FALSE, viewMatrix.data());
+    glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, modelMatrix.data());
+    glUniform3fv(uLightColorLocation, 1, lightColor.data());
+    glUniform3fv(uLightPosLocation, 1, lightPos.data());
 }
 
 void ModelRender::initAttributeLocations() {
